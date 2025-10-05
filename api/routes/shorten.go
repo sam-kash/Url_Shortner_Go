@@ -1,8 +1,15 @@
 package routes
 
 import (
-	
+	"strconv"
 	"time"
+
+	"os"
+
+	"github.com/go-redis/redis/v8"
+	"github.com/gofiber/fiber/v2"
+	"github.com/sam-kash/Url_Shortner_Go.git/database"
+	"golang.org/x/tools/go/analysis/passes/defers"
 )
 
 type request struct{
@@ -28,6 +35,29 @@ func ShortenURL(c *fiber.Ctx) error{
 
 	// impliment rate limiting 
 
+	/* 		Here we are going to check if the end user or the 
+			IP address of that user is already addeed the databse
+	*/
+
+	r2 := database.CreateClient(1)
+	defer r2.close()   // This Defer is executed after the function above has executed completely with its call stack
+	val, err := r2.Get(database.Ctx, c.IP()).Result()
+
+	if err != redis.Nil{
+		_ =r2.Set(datbase.Ctx , c.IP, os.Getenv("API_QUOTA"), 30*60*time.second).Err()
+	}else{
+		r2.Get(database.Ctx, c.IP().Result())
+		valInt, _ := strconv.Atoi(val)
+
+		if valInt <=0 {
+			limit, _ := r2.TTK(database.Ctx, c.IP()).Result()
+			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+				"error" : "Rate limit exceeded",
+				"rate_limit_reset" : limit/time.Nanosecond/time.Minute,	
+			})
+		} 
+	}
+
 	// check if the input is an actual URL
 
 	if !govalidator.IsURL(body.URL){
@@ -43,4 +73,6 @@ func ShortenURL(c *fiber.Ctx) error{
 	// enforce https or ssl
 
 	body.URL = helpers.EnforceHTTP(body.URL)
+
+	r2.Decr(database.Ctx , c.IP())
 }
