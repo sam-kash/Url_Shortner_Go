@@ -5,6 +5,8 @@ import (
 	"log"
 	"os"
 	"github.com/gofiber/fiber/v2"
+	"github.com/sam-kash/Url_Shortner_Go.git/routes"
+	
 )
 
 func setUpRoutes(app *fiber.App) { // This function has the list of all the routes

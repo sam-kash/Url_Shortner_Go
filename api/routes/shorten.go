@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"net/http"
 	"strconv"
 	"time"
 
@@ -73,6 +74,37 @@ func ShortenURL(c *fiber.Ctx) error{
 	// enforce https or ssl
 
 	body.URL = helpers.EnforceHTTP(body.URL)
+
+	var id string
+
+	if body.CustomShort == ""{
+		id = uuid.New().String()[:6]
+	} else{
+		id = body.CustomShort
+	}
+
+	r := database.CreateClient(0)
+	defer r.Close()
+
+	val, _ = r.Get(database.Ctx, id).Result()
+
+	if val != ""{
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error" : "URL customShort is already in use"
+		})
+	}
+
+	if body.Expiry == 0 {
+		body.Expiry = 24
+	}
+
+	err = r.Set(database.Ctx, id, body.URL, body.Expiry*3600*time.Second).Err()
+
+	if err != nil{
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error" : "Unable to connect to server "
+		})
+	}
 
 	// Logic to build a custom URL , functionality
 	// 1. check if the users has sent us any custom shorten URL or not
