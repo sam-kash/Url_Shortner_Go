@@ -5,7 +5,7 @@ import(
 	"strings"
 )
 
-func EnforceHTTP() string(){
+fu nc EnforceHTTP() string(){
 	if url[:4] != "http"{
 		return "http://" + url
 	}
