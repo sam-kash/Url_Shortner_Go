@@ -12,15 +12,17 @@ RUN go build -o main.
 
 FROM alpine
 
-RUN adduser
+RUN adduser -S -D -H -h/app appuser
 
-COPY ./app
+USER appuser 
 
-COPY --from=builder /build/main
+COPY . /app
+
+COPY --from=builder /build/main /app/
 
 WORKDIR /app
 
 EXPOSE 3000
 
-CMDp-"./main"
+CMD ["./main"]  
  

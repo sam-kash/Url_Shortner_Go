@@ -11,7 +11,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/sam-kash/Url_Shortner_Go.git/database"
 	"golang.org/x/tools/go/analysis/passes/defers"
-	
+	"github.com/sam-kash/Url_Shortner_Go.git/helpers"
+	"github.com/asaskevich/govalidator"
+	"github.com/google/uuid"
+
 )
 
 type request struct{
@@ -62,7 +65,7 @@ func ShortenURL(c *fiber.Ctx) error{
 
 	// check if the input is an actual URL
 
-	if !govalidator.IsURL(body.URL){
+   	if !govalidator.IsURL(body.URL){
 		retucn c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid_URL"})
 	}
 
